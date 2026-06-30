@@ -1,7 +1,7 @@
 # src/webview.nim
 import os
 
-const webviewHeader = currentSourcePath().splitPath().head & "/../vendor/webview.h"
+const webviewHeader = currentSourcePath().splitPath().head & "/../../vendor/webview.h"
 
 
 
