@@ -1,14 +1,27 @@
-// A magical Proxy object that forwards all method calls to the Nim backend
+// Jazzy Desktop JS client
+// Forwards method calls to the Jazzy HTTP RPC server running at 127.0.0.1:8080
+// Usage: const result = await jazzy.myNimFunction(arg1, arg2)
+
+const RPC_BASE = "http://127.0.0.1:8080/rpc";
+
 export const jazzy = new Proxy({}, {
-  get: function(target, prop) {
-    return async function(...args) {
-      if (typeof window[prop] === 'function') {
-        const response = await window[prop](...args);
-        // Our Nim backend returns { message: result } for now
-        return response.message;
-      } else {
-        throw new Error(`Nim function '${prop}' is not exposed.`);
+  get(target, prop) {
+    if (typeof prop === "symbol" || prop.startsWith("_")) return undefined;
+
+    return async (...args) => {
+      const response = await fetch(`${RPC_BASE}/${prop}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ args }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(err.error ?? `RPC error: ${response.status}`);
       }
+
+      const data = await response.json();
+      return data.result;
     };
-  }
+  },
 });

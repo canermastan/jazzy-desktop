@@ -1,4 +1,4 @@
-# src/webview.nim
+# FFI bindings for webview.h (Microsoft WebView2 backend)
 import os
 
 const webviewHeader = currentSourcePath().splitPath().head & "/../../vendor/webview.h"
