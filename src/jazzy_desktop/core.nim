@@ -1,10 +1,11 @@
-import std/[json, macros, os, asyncdispatch]
+import std/[json, macros, os, asyncdispatch, tables, strutils]
 import jazzy
 import jazzy/core/middlewares as jmw
 import webview_ffi
 
 export jazzy
 export webview_ffi
+export tables, strutils
 
 # ─── EXPOSE MACRO ───────────────────────────────────────────────────────────────
 # Generates a Jazzy HTTP POST route at /rpc/<funcName> for each annotated proc.
@@ -23,6 +24,7 @@ macro expose*(prc: untyped): untyped =
   var callArgs = newSeq[NimNode]()
   var argIdx = 0
   let argsIdent = ident("args")
+  let ctxIdent = ident("ctx")
 
   for i in 1 ..< params.len:
     let paramDefs = params[i]
@@ -32,26 +34,29 @@ macro expose*(prc: untyped): untyped =
       let paramName = paramDefs[j]
       let typeStr = $paramType
 
-      let extractStmt = case typeStr:
-        of "string":
-          quote do:
-            let `paramName` = `argsIdent`[`argIdx`].getStr()
-        of "int":
-          quote do:
-            let `paramName` = `argsIdent`[`argIdx`].getInt()
-        of "float":
-          quote do:
-            let `paramName` = `argsIdent`[`argIdx`].getFloat()
-        of "bool":
-          quote do:
-            let `paramName` = `argsIdent`[`argIdx`].getBool()
-        else:
-          quote do:
-            let `paramName` = to(`argsIdent`[`argIdx`], `paramType`)
+      if typeStr == "Context":
+        callArgs.add(ctxIdent)
+      else:
+        let extractStmt = case typeStr:
+          of "string":
+            quote do:
+              let `paramName` = `argsIdent`[`argIdx`].getStr()
+          of "int":
+            quote do:
+              let `paramName` = `argsIdent`[`argIdx`].getInt()
+          of "float":
+            quote do:
+              let `paramName` = `argsIdent`[`argIdx`].getFloat()
+          of "bool":
+            quote do:
+              let `paramName` = `argsIdent`[`argIdx`].getBool()
+          else:
+            quote do:
+              let `paramName` = to(`argsIdent`[`argIdx`], `paramType`)
 
-      extractStmts.add(extractStmt)
-      callArgs.add(paramName)
-      inc argIdx
+        extractStmts.add(extractStmt)
+        callArgs.add(paramName)
+        inc argIdx
 
   var callExpr = newCall(procName)
   for arg in callArgs:
@@ -60,19 +65,19 @@ macro expose*(prc: untyped): untyped =
   result = quote do:
     `prc`
 
-    proc `wrapperName`(ctx: Context) {.async, gcsafe.} =
+    proc `wrapperName`(`ctxIdent`: Context) {.async, gcsafe.} =
       try:
-        let body = parseJson(ctx.request.body)
+        let body = parseJson(`ctxIdent`.request.body)
         let `argsIdent` = body["args"]
         `extractStmts`
         let res = `callExpr`
-        ctx.json(%*{"result": res})
+        `ctxIdent`.json(%*{"result": res})
       except KeyError as e:
-        ctx.status(400).json(%*{"error": "Missing argument: " & e.msg})
+        `ctxIdent`.status(400).json(%*{"error": "Missing argument: " & e.msg})
       except JsonParsingError:
-        ctx.status(400).json(%*{"error": "Invalid JSON body"})
+        `ctxIdent`.status(400).json(%*{"error": "Invalid JSON body"})
       except Exception as e:
-        ctx.status(500).json(%*{"error": e.msg})
+        `ctxIdent`.status(500).json(%*{"error": e.msg})
 
     Route.post("/rpc/" & `procNameStr`, `wrapperName`)
 
@@ -95,33 +100,42 @@ proc runJazzyServer(cfg: ServerConfig) {.thread.} =
 
     Jazzy.serve(cfg.port, cfg.address)
 
+# ─── VFS MACRO ───────────────────────────────────────────────────────────────
+macro embedDir*(dir: static[system.string]): untyped =
+  var tblAssigns = newStmtList()
+  let vfsIdent = ident("vfs")
+  
+  let targetDir = getProjectPath() / dir
+  
+  for path in walkDirRec(targetDir):
+    let relPath = "/" & path.relativePath(targetDir).replace('\\', '/')
+    let content = slurp(path)
+    let pathLit = newLit(relPath)
+    let contentLit = newLit(content)
+    tblAssigns.add quote do:
+      `vfsIdent`[`pathLit`] = `contentLit`
+
+  result = quote do:
+    block:
+      var `vfsIdent` = newTable[system.string, system.string]()
+      `tblAssigns`
+      `vfsIdent`
+
 # ─── ENTRY POINT ───────────────────────────────────────────────────────────────
-# startDesktopApp starts the Jazzy HTTP server on a background thread,
-# then opens the Webview window on the main thread (blocking).
 
-proc startDesktopApp*(
-  title: string,
-  width: int = 1024,
-  height: int = 768,
-  devUrl: string = "",
-  prodDir: string = ""
+proc runDesktopAppInternal*(
+  title: system.string,
+  width: int,
+  height: int,
+  targetUrl: system.string,
+  port: int,
+  address: system.string
 ) =
-  let rpcPort = 8080
-  let rpcAddress = "127.0.0.1"
-
-  let cfg = ServerConfig(port: rpcPort, address: rpcAddress, prodDir: prodDir)
+  let cfg = ServerConfig(port: port, address: address, prodDir: "")
   createThread(serverThread, runJazzyServer, cfg)
 
   # Allow Jazzy to bind before the webview tries to connect
   sleep(500)
-
-  let targetUrl =
-    if devUrl.len > 0:
-      devUrl
-    elif prodDir.len > 0:
-      "http://" & rpcAddress & ":" & $rpcPort
-    else:
-      "data:text/html,<h1>No frontend configured</h1>"
 
   let w = webview_ffi.create(0, nil)
   if w == nil:
@@ -134,3 +148,40 @@ proc startDesktopApp*(
   discard w.destroy()
 
   joinThread(serverThread)
+
+template startDesktopApp*(
+  title: system.string,
+  width: int = 1024,
+  height: int = 768,
+  devUrl: system.string = "",
+  prodDir: static[system.string] = ""
+) =
+  let rpcPort = 8080
+  let rpcAddress = "127.0.0.1"
+
+  when prodDir.len > 0:
+    import std/mimetypes
+    let embeddedVfs = embedDir(prodDir)
+    let m = newMimetypes()
+    
+    proc handleVfs(ctx: Context) {.async, gcsafe.} =
+      {.cast(gcsafe).}:
+        var path = ctx.request.path
+        if path == "/": path = "/index.html"
+        if embeddedVfs.hasKey(path):
+          let ext = path.splitFile().ext
+          let mime = m.getMimetype(ext, default="application/octet-stream")
+          ctx.header("Content-Type", mime)
+          ctx.response.body = embeddedVfs[path]
+        else:
+          ctx.status(404).text("Not Found in VFS")
+        
+    Route.get("/{path...}", handleVfs)
+    Route.get("/", handleVfs)
+
+  let targetUrl =
+    if devUrl.len > 0: devUrl
+    elif prodDir.len > 0: "http://" & rpcAddress & ":" & $rpcPort
+    else: "data:text/html,<h1>No frontend configured</h1>"
+
+  runDesktopAppInternal(title, width, height, targetUrl, rpcPort, rpcAddress)
