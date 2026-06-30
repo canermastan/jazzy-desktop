@@ -36,12 +36,61 @@ function App() {
     }
   };
 
+  const changeTitle = () => {
+    if (window.jazzySetTitle) {
+      window.jazzySetTitle("Jazzy App - New Title!");
+    } else {
+      setResponse("window.jazzySetTitle is not available");
+    }
+  };
+
+  const resizeWindow = () => {
+    if (window.jazzySetSize) {
+      window.jazzySetSize(800, 600);
+    } else {
+      setResponse("window.jazzySetSize is not available");
+    }
+  };
+
+  const closeWindow = () => {
+    if (window.jazzyClose) {
+      window.jazzyClose();
+    } else {
+      setResponse("window.jazzyClose is not available");
+    }
+  };
+
+  const [logMsg, setLogMsg] = useState("");
+  const [logs, setLogs] = useState([]);
+
+  const handleSaveLog = async () => {
+    try {
+      const success = await jazzy.saveLog(logMsg);
+      if (success) {
+        setResponse("Log saved successfully!");
+        setLogMsg("");
+        handleGetLogs();
+      }
+    } catch (e) {
+      setResponse("Error saving log: " + e.message);
+    }
+  };
+
+  const handleGetLogs = async () => {
+    try {
+      const res = await jazzy.getLogs();
+      setLogs(res);
+    } catch (e) {
+      setResponse("Error getting logs: " + e.message);
+    }
+  };
+
   return (
     <div className="App" style={{ padding: "2rem", textAlign: "center" }}>
       <h1>Jazzy Desktop + React + Vite</h1>
       <p>Click the button to call a Nim function over HTTP RPC.</p>
 
-      <div style={{ margin: "2rem", display: "flex", justifyContent: "center", gap: "10px" }}>
+      <div style={{ margin: "2rem", display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
         <button
           onClick={callNimBackend}
           style={{
@@ -68,7 +117,7 @@ function App() {
             borderRadius: "8px",
           }}
         >
-          Save Theme (Test Context)
+          Save Theme
         </button>
         <button
           onClick={callSaveUser}
@@ -82,8 +131,74 @@ function App() {
             borderRadius: "8px",
           }}
         >
-          Save User (Test Object)
+          Save User
         </button>
+        <button
+          onClick={changeTitle}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#2196F3",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Change Title
+        </button>
+        <button
+          onClick={resizeWindow}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#9C27B0",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Resize Window
+        </button>
+        <button
+          onClick={closeWindow}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#F44336",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Close App
+        </button>
+      </div>
+
+      <div style={{ margin: "2rem auto", padding: "20px", border: "1px solid #4caf50", borderRadius: "8px", maxWidth: "600px", backgroundColor: "#1e1e1e", color: "white" }}>
+        <h3>Jazzy ORM Database Test</h3>
+        <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "10px" }}>
+          <input 
+            type="text" 
+            value={logMsg} 
+            onChange={(e) => setLogMsg(e.target.value)} 
+            placeholder="Enter log message" 
+            style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }}
+          />
+          <button onClick={handleSaveLog} style={{ padding: "8px 16px", backgroundColor: "#4caf50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Save to DB</button>
+          <button onClick={handleGetLogs} style={{ padding: "8px 16px", backgroundColor: "#2196F3", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Load Logs</button>
+        </div>
+        {logs.length > 0 && (
+          <ul style={{ textAlign: "left", paddingLeft: "20px" }}>
+            {logs.map(log => (
+              <li key={log.id}>
+                <strong>[{log.created_at}]</strong> {log.message}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div

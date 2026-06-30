@@ -3,3 +3,9 @@ nimcache/
 *.dll
 .vscode/
 jazzy_desktop_spec.md
+
+# Database files
+*.db
+*.db-wal
+*.db-shm
+
