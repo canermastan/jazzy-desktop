@@ -1,4 +1,4 @@
-import std/[osproc, strutils, os, streams]
+import std/[osproc, os, streams]
 
 proc writeClipboard*(text: string): bool =
   if findExe("wl-copy") != "":

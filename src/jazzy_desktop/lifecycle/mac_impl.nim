@@ -4,7 +4,7 @@ proc enforceSingleInstance*(appId: string) =
   # MacOS is Unix-based, so we can use the exact same Unix socket approach as Linux.
   let socketPath = getTempDir() / (appId & ".sock")
   
-  let fd = createNativeSocket(AF_UNIX, SOCK_STREAM, 0)
+  let fd = createNativeSocket(cint(AF_UNIX), cint(SOCK_STREAM), 0)
   if fd == osInvalidSocket: return
   
   # Try to connect. If it succeeds, another instance is running.
@@ -18,7 +18,7 @@ proc enforceSingleInstance*(appId: string) =
   # Cleanup old stale socket if it exists but wasn't listening.
   if fileExists(socketPath): removeFile(socketPath)
   
-  let listenFd = createNativeSocket(AF_UNIX, SOCK_STREAM, 0)
+  let listenFd = createNativeSocket(cint(AF_UNIX), cint(SOCK_STREAM), 0)
   if bindUnix(listenFd, socketPath) == 0:
     discard listen(listenFd)
   else:
