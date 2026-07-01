@@ -1,4 +1,4 @@
-import std/[os, json, tables]
+import std/[os, json]
 
 var storeFilePath = ""
 var storeData = newJObject()

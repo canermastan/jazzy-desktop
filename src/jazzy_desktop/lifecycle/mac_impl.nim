@@ -5,7 +5,7 @@ var lockSocket: Socket = nil
 proc enforceSingleInstance*(appId: string) =
   let socketPath = getTempDir() / (appId & ".sock")
   
-  let checkSocket = newSocket(AF_UNIX, SOCK_STREAM, Protocol(0))
+  let checkSocket = newSocket(AF_UNIX, SOCK_STREAM, IPPROTO_IP)
   try:
     checkSocket.connectUnix(socketPath)
     echo "Another instance of " & appId & " is already running. Exiting..."
@@ -20,7 +20,7 @@ proc enforceSingleInstance*(appId: string) =
     try: removeFile(socketPath) except OSError: discard
     
   try:
-    lockSocket = newSocket(AF_UNIX, SOCK_STREAM, Protocol(0))
+    lockSocket = newSocket(AF_UNIX, SOCK_STREAM, IPPROTO_IP)
     lockSocket.bindUnix(socketPath)
     lockSocket.listen()
   except CatchableError:
