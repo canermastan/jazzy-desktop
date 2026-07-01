@@ -8,8 +8,8 @@ const webviewHeader = currentSourcePath().splitPath().head & "/../../vendor/webv
 when defined(windows):
   {.passL: "-lole32 -lshlwapi -lversion -ladvapi32 -luser32".}
 elif defined(linux):
-  {.passC: gorge("pkg-config --cflags gtk+-3.0 webkit2gtk-4.0").}
-  {.passL: gorge("pkg-config --libs gtk+-3.0 webkit2gtk-4.0").}
+  {.passC: gorge("pkg-config --cflags gtk+-3.0 webkit2gtk-4.1").}
+  {.passL: gorge("pkg-config --libs gtk+-3.0 webkit2gtk-4.1").}
 elif defined(macosx):
   {.passL: "-framework WebKit".}
 
