@@ -5,7 +5,7 @@ author        = "Caner"
 description   = "Jazzy Desktop Framework Prototype"
 license       = "MIT"
 srcDir        = "src"
-bin           = @["jazzy_desktop"]
+bin           = @["jazzyd"]
 
 
 # Dependencies

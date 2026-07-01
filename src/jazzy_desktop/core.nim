@@ -34,10 +34,9 @@ proc runDesktopAppInternal*(
   w.setTitle(cstring(title))
   w.setSize(cint(width), cint(height), WebviewHint.None)
   w.navigate(cstring(targetUrl))
-  discard w.run()
+  discard w.run()      # blocks until the window is closed
   discard w.destroy()
-
-  joinThread(serverThread)
+  quit(0)              # kills the HTTP server thread too
 
 template startDesktopApp*(
   title: system.string,
