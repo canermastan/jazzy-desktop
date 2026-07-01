@@ -30,6 +30,75 @@ function App() {
     }
   };
 
+  const handlePickFile = async () => {
+    setResponse("Opening native file picker...");
+    try {
+      const filePath = await jazzy.pickFile();
+      setResponse(filePath ? `Selected File: ${filePath}` : "File selection canceled.");
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+  };
+
+  const handleShowAlert = async () => {
+    setResponse("Showing native alert...");
+    try {
+      await jazzy.showAlert("Hello from Jazzy Desktop Native Dialog!");
+      setResponse("Alert dismissed.");
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+  };
+
+  const handleReadClipboard = async () => {
+    setResponse("Reading clipboard...");
+    try {
+      const text = await jazzy.readCb();
+      setResponse(text ? `Clipboard contents: ${text}` : "Clipboard is empty or contains non-text data.");
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+  };
+
+  const handleWriteClipboard = async () => {
+    try {
+      const success = await jazzy.writeCb("Hello from Jazzy React App!");
+      if (success) {
+        setResponse("Successfully wrote to native clipboard! (Try pasting somewhere)");
+      } else {
+        setResponse("Failed to write to clipboard.");
+      }
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+  };
+
+  const handleInitTray = async () => {
+    try {
+      await jazzy.showTray("Jazzy Desktop App");
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+  };
+
+  const handleOpenLink = async () => {
+    try {
+      await jazzy.openExternalLink("https://github.com");
+      setResponse("Opened Github in your default browser!");
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+  };
+
+  const handleWriteLog = async () => {
+    try {
+      await jazzy.writeLog("Hello from React!");
+      setResponse("Successfully wrote to jazzy.log file!");
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+  };
+
   const callNimBackend = async () => {
     setResponse("Loading...");
     try {
@@ -144,6 +213,146 @@ function App() {
           }}
         >
           {progressRunning ? "Running..." : "Start Progress Task (WS)"}
+        </button>
+        <button
+          onClick={handlePickFile}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#009688",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Pick File (Native)
+        </button>
+        <button
+          onClick={handleShowAlert}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#FF5722",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Show Alert (Native)
+        </button>
+        <button
+          onClick={handleReadClipboard}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#795548",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Read Clipboard (Native)
+        </button>
+        <button
+          onClick={handleWriteClipboard}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#607D8B",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Write to Clipboard
+        </button>
+        <button
+          onClick={handleInitTray}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#9C27B0",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Create Tray Icon
+        </button>
+        <button
+          onClick={handleOpenLink}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#2196F3",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Open GitHub in Browser
+        </button>
+        <button
+          onClick={handleWriteLog}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#607D8B",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Write to Log File
+        </button>
+        <button
+          onClick={() => window.jazzyWindowCenter && window.jazzyWindowCenter()}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#3F51B5",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Center Window
+        </button>
+        <button
+          onClick={() => window.jazzyWindowMinimize && window.jazzyWindowMinimize()}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#009688",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Minimize
+        </button>
+        <button
+          onClick={() => window.jazzyWindowMaximize && window.jazzyWindowMaximize()}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            backgroundColor: "#FF9800",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Maximize
         </button>
         <button
           onClick={callNimBackend}

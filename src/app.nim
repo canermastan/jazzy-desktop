@@ -49,10 +49,52 @@ proc runProgressTask(): bool {.expose.} =
     emit("progress", %*{"percent": i * 5})
   return true
 
+proc pickFile(): string {.expose.} =
+  return selectFileDialog("Select a file to process", @[
+    DialogFilter(name: "Image Files", extensions: "*.png;*.jpg;*.jpeg"),
+    DialogFilter(name: "All Files", extensions: "*.*")
+  ], forSave = false)
+
+proc showAlert(msg: string): bool {.expose.} =
+  showMessageBox("System Alert", msg, mbWarning)
+  return true
+
+proc readCb(): string {.expose.} =
+  return readClipboard()
+
+proc writeCb(text: string): bool {.expose.} =
+  return writeClipboard(text)
+
+proc handleMyItem() =
+  showMessageBox("Jazzy Desktop", "Custom Tray Menu Item Clicked!", mbInfo)
+
+proc showTray(tooltip: string): bool {.expose.} =
+  {.cast(gcsafe).}:
+    initTray(gAppWebview, tooltip, @[
+      TrayMenuItem(id: 1, label: "Jazzy Settings", callback: handleMyItem)
+    ])
+  return true
+
+# Initialize Logger
+initLogger("app_debug.log")
+logInfo("Jazzy Desktop App Started!")
+
+proc openExternalLink(url: string): bool {.expose.} =
+  return openBrowser(url)
+
+proc writeLog(msg: string): bool {.expose.} =
+  {.cast(gcsafe).}:
+    logInfo("Frontend Log: " & msg)
+  return true
+
+# Prevent multiple instances from running
+enforceSingleInstance("JazzyDesktopApp_123")
+
 startDesktopApp(
   title = "Jazzy Desktop App",
   width = 1024,
   height = 768,
   devUrl = "http://localhost:5173",
-  prodDir = "../frontend/dist"
+  prodDir = "../frontend/dist",
+  #frameless = false
 )
