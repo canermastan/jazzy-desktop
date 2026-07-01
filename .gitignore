@@ -8,4 +8,4 @@ jazzy_desktop_spec.md
 *.db
 *.db-wal
 *.db-shm
-
+DRAFT_DOCS.md

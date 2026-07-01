@@ -12,11 +12,11 @@ import ./lifecycle
 import ./tray
 import ./browser
 import ./logger
-
+import ./store
 export jazzy
 export webview_ffi
 export tables, strutils
-export macros, server, window, events, dialogs, clipboard, lifecycle, tray, browser, logger
+export macros, server, window, events, dialogs, clipboard, lifecycle, tray, browser, logger, store
 
 var gAppWebview*: Webview
 
