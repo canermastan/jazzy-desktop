@@ -41,7 +41,7 @@ proc runNpmBuild(workingDir: string): Process =
 # ─── BACKEND COMMANDS ─────────────────────────────────────────────────────────
 var backendProc: Process = nil
 
-proc buildBackend(isDev: bool, iconRes: string = ""): bool =
+proc buildBackend(isDev: bool, iconRes: string = "", platform: string = ""): bool =
   echo "🎷 [jazzyd] Compiling Nim backend..."
   var args = @["cpp", "--threads:on"]
   if not isDev:
@@ -49,6 +49,10 @@ proc buildBackend(isDev: bool, iconRes: string = ""): bool =
     args.add("--app:gui")
   if iconRes.len > 0:
     args.add("--passL:" & iconRes)
+  if platform == "linux":
+    args.add("--os:linux")
+  elif platform == "mac":
+    args.add("--os:macosx")
   args.add("src" / "app.nim")
   
   let p = startProcess("nim", args=args, options={poUsePath, poStdErrToStdOut})
@@ -68,8 +72,8 @@ proc buildBackend(isDev: bool, iconRes: string = ""): bool =
     echo "❌ [jazzyd] Backend Compile Error:\n", output
   return code == 0
 
-proc startBackend() =
-  if buildBackend(true):
+proc startBackend(platform: string = "") =
+  if buildBackend(true, "", platform):
     echo "🎷 [jazzyd] Starting app..."
     when defined(windows):
       let exePath = "src" / "app.exe"
@@ -114,7 +118,7 @@ proc getSourceFiles(dir: string): seq[string] =
     if file.endsWith(".nim"):
       result.add(file)
 
-proc runDev() =
+proc runDev(platform: string = "") =
   echo BANNER
   echo "Starting Jazzy Desktop in DEV mode..."
   
@@ -126,7 +130,7 @@ proc runDev() =
   for f in getSourceFiles("src"):
     fileTimes[f] = getLastModificationTime(f)
     
-  startBackend()
+  startBackend(platform)
   
   try:
     while true:
@@ -147,13 +151,13 @@ proc runDev() =
       if changed:
         echo "\n🔄 [jazzyd] File change detected! Reloading..."
         stopBackend()
-        startBackend()
+        startBackend(platform)
   finally:
     stopBackend()
     stopFrontend()
 
 # ─── BUILD PIPELINE ───────────────────────────────────────────────────────────
-proc runBuild() =
+proc runBuild(platform: string = "") =
   echo BANNER
   echo "📦 Starting Jazzy Desktop PRODUCTION build..."
   
@@ -183,7 +187,7 @@ proc runBuild() =
     echo "\n[2/3] Icon embedding is currently only supported on Windows."
   
   echo "\n[3/3] Compiling Nim Backend (Release + GUI)..."
-  if buildBackend(false, iconRes):
+  if buildBackend(false, iconRes, platform):
     echo "\n✅ Build completed successfully! Check the src/ directory for your executable."
   else:
     echo "❌ Backend build failed!"
@@ -200,11 +204,16 @@ when isMainModule:
     showHelp()
     quit(0)
     
+  var platform = ""
+  for i in 1..<args.len:
+    if args[i].startsWith("--platform="):
+      platform = args[i].replace("--platform=", "").toLowerAscii()
+
   case args[0].toLowerAscii()
   of "dev":
-    runDev()
+    runDev(platform)
   of "build":
-    runBuild()
+    runBuild(platform)
   of "help", "--help", "-h":
     showHelp()
   else:
