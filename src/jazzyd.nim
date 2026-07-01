@@ -41,16 +41,27 @@ proc runNpmBuild(workingDir: string): Process =
 # ─── BACKEND COMMANDS ─────────────────────────────────────────────────────────
 var backendProc: Process = nil
 
-proc buildBackend(isDev: bool): bool =
+proc buildBackend(isDev: bool, iconRes: string = ""): bool =
   echo "🎷 [jazzyd] Compiling Nim backend..."
   var args = @["cpp", "--threads:on"]
   if not isDev:
     args.add("-d:release")
     args.add("--app:gui")
+  if iconRes.len > 0:
+    args.add("--passL:" & iconRes)
   args.add("src" / "app.nim")
   
   let p = startProcess("nim", args=args, options={poUsePath, poStdErrToStdOut})
-  let output = p.outputStream.readAll()
+  var output = ""
+  for line in p.lines:
+    output.add(line & "\n")
+    if line.len > 0:
+      let displayLine = if line.len > 65: line[0..62] & "..." else: line
+      let padding = if displayLine.len < 65: repeat(' ', 65 - displayLine.len) else: ""
+      stdout.write("\r  ⏳ " & displayLine & padding)
+      stdout.flushFile()
+      
+  echo "" # Move to next line after compilation finishes
   let code = p.waitForExit()
   p.close()
   if code != 0:
@@ -146,7 +157,7 @@ proc runBuild() =
   echo BANNER
   echo "📦 Starting Jazzy Desktop PRODUCTION build..."
   
-  echo "\n[1/2] Building Vite Frontend..."
+  echo "\n[1/3] Building Vite Frontend..."
   let fProc = runNpmBuild("frontend")
   let output = fProc.outputStream.readAll()
   let code = fProc.waitForExit()
@@ -155,12 +166,32 @@ proc runBuild() =
     echo "❌ Frontend build failed!\n", output
     quit(1)
   
-  echo "\n[2/2] Compiling Nim Backend (Release + GUI)..."
-  if buildBackend(false):
+  var iconRes = ""
+  when defined(windows):
+    if fileExists("app_icon.ico"):
+      echo "\n[2/3] Embedding application icon..."
+      writeFile("jazzy_icon.rc", "101 ICON \"app_icon.ico\"")
+      let wcode = execShellCmd("windres jazzy_icon.rc -O coff -o jazzy_icon.res")
+      if wcode == 0 and fileExists("jazzy_icon.res"):
+        iconRes = "jazzy_icon.res"
+        echo "✅ Icon compiled successfully."
+      else:
+        echo "⚠️ Failed to compile icon using windres. Proceeding without icon."
+    else:
+      echo "\n[2/3] No app_icon.ico found in project root. Skipping icon embedding."
+  else:
+    echo "\n[2/3] Icon embedding is currently only supported on Windows."
+  
+  echo "\n[3/3] Compiling Nim Backend (Release + GUI)..."
+  if buildBackend(false, iconRes):
     echo "\n✅ Build completed successfully! Check the src/ directory for your executable."
   else:
     echo "❌ Backend build failed!"
     quit(1)
+    
+  when defined(windows):
+    if fileExists("jazzy_icon.rc"): removeFile("jazzy_icon.rc")
+    if fileExists("jazzy_icon.res"): removeFile("jazzy_icon.res")
 
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 when isMainModule:
