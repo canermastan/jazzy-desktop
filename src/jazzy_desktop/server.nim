@@ -1,6 +1,7 @@
 import jazzy
 import jazzy/core/middlewares as jmw
 import os
+import ./events
 
 type ServerConfig* = object
   port*: int
@@ -15,4 +16,5 @@ proc runJazzyServer*(cfg: ServerConfig) {.thread.} =
       Jazzy.static(cfg.prodDir, "/")
 
     Jazzy.use(jmw.cors(allowedOrigin = "*"))
+    initEventServer()
     Jazzy.serve(cfg.port, cfg.address)

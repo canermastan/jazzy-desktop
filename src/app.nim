@@ -40,6 +40,15 @@ proc getLogs(ctx: Context): JsonNode {.expose.} =
   {.cast(gcsafe).}:
     return DB.table("test_logs").get()
 
+import std/os
+
+proc runProgressTask(): bool {.expose.} =
+  # Simulate a progress-heavy background task
+  for i in 1..20:
+    sleep(50)
+    emit("progress", %*{"percent": i * 5})
+  return true
+
 startDesktopApp(
   title = "Jazzy Desktop App",
   width = 1024,

@@ -5,11 +5,12 @@ import webview_ffi
 import ./macros
 import ./server
 import ./window
+import ./events
 
 export jazzy
 export webview_ffi
 export tables, strutils
-export macros, server, window
+export macros, server, window, events
 
 proc runDesktopAppInternal*(
   title: system.string,

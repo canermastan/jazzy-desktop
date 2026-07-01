@@ -11,5 +11,5 @@ bin           = @["jazzyd"]
 # Dependencies
 
 requires "nim >= 2.0.0"
-requires "jazzy"
+requires "jazzy >= 0.4.4"
 requires "webview"

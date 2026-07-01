@@ -1,9 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { jazzy } from "./jazzy";
 import "./App.css";
 
 function App() {
   const [response, setResponse] = useState("Click the button to call Nim");
+  const [progress, setProgress] = useState(0);
+  const [progressRunning, setProgressRunning] = useState(false);
+
+  useEffect(() => {
+    const handleProgress = (data) => {
+      setProgress(data.percent);
+    };
+    jazzy.on("progress", handleProgress);
+    return () => {
+      jazzy.off("progress", handleProgress);
+    };
+  }, []);
+
+  const startProgressTask = async () => {
+    setProgress(0);
+    setProgressRunning(true);
+    setResponse("Running background progress task...");
+    try {
+      await jazzy.runProgressTask();
+    } catch (err) {
+      setResponse("Progress task error: " + err.message);
+    } finally {
+      setProgressRunning(false);
+    }
+  };
 
   const callNimBackend = async () => {
     setResponse("Loading...");
@@ -90,7 +115,36 @@ function App() {
       <h1>Jazzy Desktop + React + Vite</h1>
       <p>Click the button to call a Nim function over HTTP RPC.</p>
 
+      {/* Progress Bar UI */}
+      {(progressRunning || progress > 0) && (
+        <div style={{ margin: "2rem auto", width: "100%", maxWidth: "600px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+            <span>Progress Task Status</span>
+            <span>{progress}%</span>
+          </div>
+          <div style={{ width: "100%", height: "20px", backgroundColor: "#333", borderRadius: "10px", overflow: "hidden" }}>
+            <div style={{ width: `${progress}%`, height: "100%", backgroundColor: "#4caf50", transition: "width 0.2s ease-in-out" }}></div>
+          </div>
+        </div>
+      )}
+
       <div style={{ margin: "2rem", display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
+        <button
+          onClick={startProgressTask}
+          disabled={progressRunning}
+          style={{
+            padding: "10px 20px",
+            fontSize: "1.2rem",
+            cursor: progressRunning ? "not-allowed" : "pointer",
+            backgroundColor: "#e91e63",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            opacity: progressRunning ? 0.6 : 1,
+          }}
+        >
+          {progressRunning ? "Running..." : "Start Progress Task (WS)"}
+        </button>
         <button
           onClick={callNimBackend}
           style={{
