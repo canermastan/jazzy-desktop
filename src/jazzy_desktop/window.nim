@@ -114,7 +114,7 @@ when defined(windows):
   proc GetSystemMetrics(nIndex: cint): cint {.stdcall, dynlib: "user32.dll", importc: "GetSystemMetrics".}
   proc GetAncestor(hwnd: HWND, gaFlags: uint32): HWND {.stdcall, dynlib: "user32.dll", importc: "GetAncestor".}
 
-proc getTopLevelWindow(w: Webview): pointer =
+proc getTopLevelWindow(w: Webview): pointer {.used.} =
   when defined(windows):
     let hwnd = w.getWindow()
     if hwnd != nil:
@@ -146,30 +146,47 @@ proc applyFramelessAndMica*(w: Webview) =
   elif defined(linux):
     discard # Linux implementation pending
 
+when defined(linux):
+  proc gtk_window_iconify(window: pointer) {.importc, cdecl.}
+  proc gtk_window_maximize(window: pointer) {.importc, cdecl.}
+  proc gtk_window_unmaximize(window: pointer) {.importc, cdecl.}
+  proc gtk_widget_hide(widget: pointer) {.importc, cdecl.}
+  proc gtk_widget_show_all(widget: pointer) {.importc, cdecl.}
+
 proc winMinimize*(w: Webview) =
   when defined(windows):
     let hwnd = getTopLevelWindow(w)
     if hwnd != nil: discard ShowWindow(hwnd, SW_MINIMIZE)
+  elif defined(linux):
+    gtk_window_iconify(w.getWindow())
 
 proc winMaximize*(w: Webview) =
   when defined(windows):
     let hwnd = getTopLevelWindow(w)
     if hwnd != nil: discard ShowWindow(hwnd, SW_MAXIMIZE)
+  elif defined(linux):
+    gtk_window_maximize(w.getWindow())
 
 proc winRestore*(w: Webview) =
   when defined(windows):
     let hwnd = getTopLevelWindow(w)
     if hwnd != nil: discard ShowWindow(hwnd, SW_RESTORE)
+  elif defined(linux):
+    gtk_window_unmaximize(w.getWindow())
 
 proc winHide*(w: Webview) =
   when defined(windows):
     let hwnd = getTopLevelWindow(w)
     if hwnd != nil: discard ShowWindow(hwnd, SW_HIDE)
+  elif defined(linux):
+    gtk_widget_hide(w.getWindow())
 
 proc winShow*(w: Webview) =
   when defined(windows):
     let hwnd = getTopLevelWindow(w)
     if hwnd != nil: discard ShowWindow(hwnd, SW_RESTORE)
+  elif defined(linux):
+    gtk_widget_show_all(w.getWindow())
 
 proc winCenter*(w: Webview) =
   when defined(windows):
