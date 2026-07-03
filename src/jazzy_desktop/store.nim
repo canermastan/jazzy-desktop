@@ -3,11 +3,15 @@ import std/[os, json]
 var storeFilePath = ""
 var storeData = newJObject()
 
+proc getAppDir*(appName: string): string =
+  result = getConfigDir() / appName
+  if not dirExists(result):
+    createDir(result)
+
 proc initStore*(appName: string) =
-  let configDir = getConfigDir() / appName
-  if not dirExists(configDir):
-    createDir(configDir)
+  let configDir = getAppDir(appName)
   storeFilePath = configDir / "config.json"
+
   
   if fileExists(storeFilePath):
     try:
