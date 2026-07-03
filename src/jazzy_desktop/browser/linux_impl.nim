@@ -1,3 +1,5 @@
+import std/osproc
+
 proc openBrowser*(url: string): bool =
-  echo "Jazzy Desktop Browser: Linux implementation pending"
-  return false
+  let (_, exitCode) = execCmdEx("xdg-open \"" & url & "\"")
+  return exitCode == 0

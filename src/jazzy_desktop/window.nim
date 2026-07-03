@@ -152,6 +152,8 @@ when defined(linux):
   proc gtk_window_unmaximize(window: pointer) {.importc, cdecl.}
   proc gtk_widget_hide(widget: pointer) {.importc, cdecl.}
   proc gtk_widget_show_all(widget: pointer) {.importc, cdecl.}
+  proc gtk_window_set_position(window: pointer, position: cint) {.importc, cdecl.}
+
 
 proc winMinimize*(w: Webview) =
   when defined(windows):
@@ -202,3 +204,7 @@ proc winCenter*(w: Webview) =
         let y = (screenHeight - height) div 2
         # SWP_NOZORDER = 0x0004, SWP_NOSIZE = 0x0001
         discard SetWindowPos(hwnd, nil, x, y, 0, 0, 0x0001 or 0x0004)
+  elif defined(linux):
+    # GTK_WIN_POS_CENTER = 1
+    gtk_window_set_position(w.getWindow(), 1)
+
