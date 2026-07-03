@@ -1,12 +1,8 @@
 import std/[os, json]
+import helpers
 
 var storeFilePath = ""
 var storeData = newJObject()
-
-proc getAppDir*(appName: string): string =
-  result = getConfigDir() / appName
-  if not dirExists(result):
-    createDir(result)
 
 proc initStore*(appName: string) =
   let configDir = getAppDir(appName)
