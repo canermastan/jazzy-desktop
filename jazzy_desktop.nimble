@@ -5,6 +5,7 @@ author        = "Caner"
 description   = "Jazzy Desktop Framework Prototype"
 license       = "MIT"
 srcDir        = "src"
+installExt    = @["nim", "cpp", "c", "h"]
 bin           = @["jazzyd"]
 
 

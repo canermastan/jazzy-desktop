@@ -60,9 +60,10 @@ proc buildBackend(isDev: bool, iconRes: string = "", platform: string = ""): boo
   let p = startProcess("nim", args=args, options={poUsePath, poStdErrToStdOut})
   var output = ""
   for line in p.lines:
-    output.add(line & "\n")
-    if line.len > 0:
-      let displayLine = if line.len > 65: line[0..62] & "..." else: line
+    let cleanLine = line.replace("\r", "")
+    output.add(cleanLine & "\n")
+    if cleanLine.len > 0:
+      let displayLine = if cleanLine.len > 65: cleanLine[0..62] & "..." else: cleanLine
       let padding = if displayLine.len < 65: repeat(' ', 65 - displayLine.len) else: ""
       stdout.write("\r  ⏳ " & displayLine & padding)
       stdout.flushFile()
