@@ -240,8 +240,8 @@ startDesktopApp(
 """
 
 const JAZZY_JS_TEMPLATE = """
-const RPC_BASE = "http://127.0.0.1:8080/rpc";
-const WS_URL = "ws://127.0.0.1:8080/_jazzy/events";
+const RPC_BASE = "http://127.0.0.1:7654/rpc";
+const WS_URL = "ws://127.0.0.1:7654/_jazzy/events";
 
 const listeners = {};
 let ws = null;
@@ -300,8 +300,8 @@ export const jazzy = new Proxy(client, {
 """
 
 const JAZZY_TS_TEMPLATE = """
-const RPC_BASE = "http://127.0.0.1:8080/rpc";
-const WS_URL = "ws://127.0.0.1:8080/_jazzy/events";
+const RPC_BASE = "http://127.0.0.1:7654/rpc";
+const WS_URL = "ws://127.0.0.1:7654/_jazzy/events";
 
 const listeners: Record<string, Function[]> = {};
 let ws: WebSocket | null = null;
