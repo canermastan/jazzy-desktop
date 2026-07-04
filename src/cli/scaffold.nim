@@ -1,5 +1,30 @@
 import std/[os, strutils, osproc, terminal]
 
+const nimblePath = static:
+  var path = ""
+  let baseDir = currentSourcePath().parentDir()
+  let attempts = [
+    baseDir / ".." / ".." / "jazzy_desktop.nimble"
+  ]
+  for a in attempts:
+    if fileExists(a):
+      path = a
+      break
+  path
+
+proc getVersion(): string =
+  when nimblePath == "":
+    return "0.1.0"
+  else:
+    let content = staticRead(nimblePath)
+    for line in content.splitLines():
+      if line.startsWith("version"):
+        let parts = line.split("=")
+        if parts.len > 1:
+          return parts[1].strip().strip(chars = {'"'})
+    return "0.1.0"
+
+const JAZZY_DESKTOP_VERSION* = getVersion()
 const CSS_TEMPLATE = """
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
  
@@ -181,6 +206,23 @@ const SHAPES   = ['rect','circle','ribbon'];
     }
   }
 """
+
+const NIMBLE_TEMPLATE = """
+# Package
+
+version       = "0.1.0"
+author        = "Your Name"
+description   = "A new Jazzy Desktop App"
+license       = "MIT"
+srcDir        = "src"
+bin           = @["app"]
+
+
+# Dependencies
+
+requires "nim >= 2.0.0"
+requires "jazzy >= 0.4.4"
+requires "jazzy_desktop >= """ & JAZZY_DESKTOP_VERSION & "\"\n"
 
 const APP_NIM_TEMPLATE = """
 import jazzy_desktop
@@ -546,6 +588,8 @@ proc runNew*(projectName: string) =
   createDir("src")
 
   writeFile("src" / "app.nim", APP_NIM_TEMPLATE)
+  let nimbleName = projectName.replace("-", "_") & ".nimble"
+  writeFile(nimbleName, NIMBLE_TEMPLATE)
   
 
   createDir("frontend" / "src" / "lib")
