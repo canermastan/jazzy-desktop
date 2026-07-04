@@ -27,7 +27,8 @@ proc runDesktopAppInternal*(
   targetUrl: system.string,
   port: int,
   address: system.string,
-  frameless: bool
+  frameless: bool,
+  resizable: bool
 ) =
   let cfg = ServerConfig(port: port, address: address, prodDir: "")
   createThread(serverThread, runJazzyServer, cfg)
@@ -45,7 +46,8 @@ proc runDesktopAppInternal*(
     applyFramelessAndMica(w)
 
   w.setTitle(cstring(title))
-  w.setSize(cint(width), cint(height), WebviewHint.None)
+  let hint = if resizable: WebviewHint.None else: WebviewHint.Fixed
+  w.setSize(cint(width), cint(height), hint)
   w.navigate(cstring(targetUrl))
   discard w.run()      # blocks until the window is closed
   discard w.destroy()
@@ -57,7 +59,8 @@ template startDesktopApp*(
   height: int = 768,
   devUrl: system.string = "",
   prodDir: static[system.string] = "",
-  frameless: bool = false
+  frameless: bool = false,
+  resizable: bool = true
 ) =
   let rpcPort = 8080
   let rpcAddress = "127.0.0.1"
@@ -94,4 +97,4 @@ template startDesktopApp*(
       elif prodDir.len > 0: "http://" & rpcAddress & ":" & $rpcPort
       else: "data:text/html,<h1>No frontend configured</h1>"
 
-  runDesktopAppInternal(title, width, height, targetUrl, rpcPort, rpcAddress, frameless)
+  runDesktopAppInternal(title, width, height, targetUrl, rpcPort, rpcAddress, frameless, resizable)
