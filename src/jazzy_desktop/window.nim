@@ -1,6 +1,9 @@
 import std/json
 import webview_ffi
 
+when defined(gcc) or defined(clang):
+  {.passC: "-Wno-incompatible-pointer-types".}
+
 proc windowCloseCb*(seqId, req: cstring, arg: pointer) {.cdecl.} =
   let w = cast[Webview](arg)
   w.terminate()
