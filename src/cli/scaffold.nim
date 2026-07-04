@@ -331,7 +331,7 @@ function App() {
       const response = await jazzy.sayHello("Developer", 99)
       setMsg("It's Working!! " + response)
     } catch (err) {
-      setMsg("Error: " + err.message
+      setMsg("Error: " + err.message)
     }
   }
 
@@ -423,7 +423,7 @@ function App() {
       const response = await jazzy.sayHello("Developer", 99)
       setMsg("It's Working!! " + response)
     } catch (err) {
-      setMsg("Error: " + err.message
+      setMsg("Error: " + err.message)
     }
   }
 
@@ -446,7 +446,7 @@ import './style.css'
 import { jazzy } from './jazzy'
 import { burst } from './lib/confetti'
 
-document.querySelector('#app').innerHTML = \
+document.querySelector('#app').innerHTML = `
   <div class="jazzy-container">
     <h1>Welcome to Jazzy Desktop</h1>
     <p id="msg">Welcome to Jazzy Desktop</p>
@@ -454,7 +454,7 @@ document.querySelector('#app').innerHTML = \
       <button id="btn" class="cbtn cbtn-light" data-colors="#38bdf8,#818cf8,#c084fc,#e85d3a,#34d399">🎉 Celebrate</button>
     </div>
   </div>
-\
+`
 
 document.querySelector('#btn').addEventListener('click', async (e) => {
   burst(e.currentTarget, e)
