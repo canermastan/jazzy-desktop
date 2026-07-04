@@ -43,12 +43,15 @@ proc runNpmBuild(workingDir: string): Process =
 # ─── BACKEND COMMANDS ─────────────────────────────────────────────────────────
 var backendProc: Process = nil
 
-proc buildBackend(isDev: bool, iconRes: string = "", platform: string = ""): bool =
+proc buildBackend(isDev: bool, iconRes: string = "", platform: string = "", isWeb: bool = false): bool =
   echo "🎷 [jazzyd] Compiling Nim backend..."
   var args = @["cpp", "--threads:on"]
   if not isDev:
     args.add("-d:release")
-    args.add("--app:gui")
+    if not isWeb:
+      args.add("--app:gui")
+  if isWeb:
+    args.add("-d:jazzyWeb")
   if iconRes.len > 0:
     args.add("--passL:" & iconRes)
   if platform == "linux":
@@ -75,8 +78,8 @@ proc buildBackend(isDev: bool, iconRes: string = "", platform: string = ""): boo
     echo "❌ [jazzyd] Backend Compile Error:\n", output
   return code == 0
 
-proc startBackend(platform: string = "") =
-  if buildBackend(true, "", platform):
+proc startBackend(platform: string = "", isWeb: bool = false) =
+  if buildBackend(true, "", platform, isWeb):
     echo "🎷 [jazzyd] Starting app..."
     when defined(windows):
       let exePath = "src" / "app.exe"
@@ -121,7 +124,7 @@ proc getSourceFiles(dir: string): seq[string] =
     if file.endsWith(".nim"):
       result.add(file)
 
-proc runDev(platform: string = "") =
+proc runDev(platform: string = "", isWeb: bool = false) =
   styledEcho styleBright, fgCyan, BANNER
   styledEcho fgMagenta, "Starting Jazzy Desktop in DEV mode..."
   
@@ -133,7 +136,7 @@ proc runDev(platform: string = "") =
   for f in getSourceFiles("src"):
     fileTimes[f] = getLastModificationTime(f)
     
-  startBackend(platform)
+  startBackend(platform, isWeb)
   
   try:
     while true:
@@ -154,13 +157,13 @@ proc runDev(platform: string = "") =
       if changed:
         echo "\n🔄 [jazzyd] File change detected! Reloading..."
         stopBackend()
-        startBackend(platform)
+        startBackend(platform, isWeb)
   finally:
     stopBackend()
     stopFrontend()
 
 # ─── BUILD PIPELINE ───────────────────────────────────────────────────────────
-proc runBuild(platform: string = "") =
+proc runBuild(platform: string = "", isWeb: bool = false) =
   styledEcho styleBright, fgCyan, BANNER
   styledEcho styleBright, fgMagenta, "📦 Starting Jazzy Desktop PRODUCTION build..."
   
@@ -189,8 +192,8 @@ proc runBuild(platform: string = "") =
   else:
     echo "\n[2/3] Icon embedding is currently only supported on Windows."
   
-  echo "\n[3/3] Compiling Nim Backend (Release + GUI)..."
-  if buildBackend(false, iconRes, platform):
+  echo "\n[3/3] Compiling Nim Backend (Release)..."
+  if buildBackend(false, iconRes, platform, isWeb):
     echo "\n✅ Build completed successfully! Check the src/ directory for your executable."
   else:
     echo "❌ Backend build failed!"
@@ -208,9 +211,12 @@ when isMainModule:
     quit(0)
     
   var platform = ""
+  var isWeb = false
   for i in 1..<args.len:
     if args[i].startsWith("--platform="):
       platform = args[i].replace("--platform=", "").toLowerAscii()
+    elif args[i] == "--web":
+      isWeb = true
 
   case args[0].toLowerAscii()
   of "new":
@@ -219,9 +225,9 @@ when isMainModule:
       quit(1)
     runNew(args[1])
   of "dev":
-    runDev(platform)
+    runDev(platform, isWeb)
   of "build":
-    runBuild(platform)
+    runBuild(platform, isWeb)
   of "help", "--help", "-h":
     showHelp()
   else:
