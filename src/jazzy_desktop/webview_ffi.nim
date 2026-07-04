@@ -3,6 +3,9 @@ import os
 
 const webviewHeader = currentSourcePath().splitPath().head & "/vendor/webview.h"
 
+when defined(gcc) or defined(clang):
+  {.passC: "-Wno-incompatible-pointer-types".}
+
 
 
 when defined(windows):
