@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "Caner"
-description   = "Jazzy Desktop Framework Prototype"
+description   = "Build lightning-fast, cross-platform desktop applications using Nim and modern web technologies."
 license       = "MIT"
 srcDir        = "src"
 installDirs   = @["jazzy_desktop", "cli"]
