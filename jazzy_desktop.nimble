@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "Caner"
 description   = "Build lightning-fast, cross-platform desktop applications using Nim and modern web technologies."
 license       = "MIT"
