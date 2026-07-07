@@ -36,10 +36,12 @@ type
     FlagsEx: DWORD
 
 const
-  OFN_FILEMUSTEXIST = 0x00001000'i32
-  OFN_PATHMUSTEXIST = 0x00000800'i32
-  OFN_OVERWRITEPROMPT = 0x00000002'i32
-  OFN_HIDEREADONLY = 0x00000004'i32
+  OFN_FILEMUSTEXIST    = 0x00001000'i32
+  OFN_PATHMUSTEXIST    = 0x00000800'i32
+  OFN_OVERWRITEPROMPT  = 0x00000002'i32
+  OFN_HIDEREADONLY     = 0x00000004'i32
+  OFN_ALLOWMULTISELECT = 0x00000200'i32
+  OFN_EXPLORER         = 0x00080000'i32
 
   MB_OK = 0x00000000'i32
   MB_ICONERROR = 0x00000010'i32
@@ -71,13 +73,14 @@ proc buildWinFilter(filters: seq[DialogFilter]): seq[int16] =
   res.add(0'i16)
   return res
 
-proc selectFileDialog*(title: string, filters: seq[DialogFilter] = @[], forSave: bool = false): string =
+proc selectFileDialog*(title: string, filters: seq[DialogFilter] = @[], multiSelect: bool = false, forSave: bool = false): string =
+  const bufSize = 8192
   var ofn: OPENFILENAMEW
   ofn.lStructSize = cast[DWORD](sizeof(OPENFILENAMEW))
   
-  var fileName = newWideCString(newString(260))
+  var fileName = newWideCString(newString(bufSize))
   ofn.lpstrFile = fileName
-  ofn.nMaxFile = 260
+  ofn.nMaxFile = bufSize
   
   var wTitle = newWideCString(title)
   ofn.lpstrTitle = wTitle
@@ -91,7 +94,33 @@ proc selectFileDialog*(title: string, filters: seq[DialogFilter] = @[], forSave:
     if GetSaveFileNameW(addr ofn): return $ofn.lpstrFile
   else:
     ofn.Flags = OFN_PATHMUSTEXIST or OFN_FILEMUSTEXIST or OFN_HIDEREADONLY
-    if GetOpenFileNameW(addr ofn): return $ofn.lpstrFile
+    if multiSelect:
+      ofn.Flags = ofn.Flags or OFN_ALLOWMULTISELECT or OFN_EXPLORER
+    if GetOpenFileNameW(addr ofn):
+      if not multiSelect:
+        return $ofn.lpstrFile
+      # Multi-select result: directory\0file1\0file2\0\0
+      # If only one file was selected, the buffer contains the full path directly.
+      var results: seq[string] = @[]
+      var pos = 0
+      var parts: seq[string] = @[]
+      while pos < bufSize:
+        var s = ""
+        while pos < bufSize and int(cast[ptr int16](cast[int](fileName) + pos * 2)[]) != 0:
+          s.add(char(int(cast[ptr int16](cast[int](fileName) + pos * 2)[])))
+          inc(pos)
+        if s.len == 0: break
+        parts.add(s)
+        inc(pos) # skip null
+      if parts.len == 1:
+        # Single file selected
+        results.add(parts[0])
+      else:
+        # parts[0] = directory, rest = filenames
+        let dir = parts[0]
+        for i in 1 ..< parts.len:
+          results.add(dir & "\\" & parts[i])
+      return results.join("\n")
     
   return ""
 

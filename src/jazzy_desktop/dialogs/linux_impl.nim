@@ -1,10 +1,12 @@
 import types
 import std/[osproc, strutils]
 
-proc selectFileDialog*(title: string, filters: seq[DialogFilter] = @[], forSave: bool = false): string =
+proc selectFileDialog*(title: string, filters: seq[DialogFilter] = @[], multiSelect: bool = false, forSave: bool = false): string =
   var cmd = "zenity --file-selection --title=\"" & title & "\""
   if forSave:
     cmd.add(" --save")
+  if multiSelect:
+    cmd.add(" --multiple --separator='\n'")
   
   for filter in filters:
     # Zenity filter format: --file-filter="Images | *.png *.jpg"
