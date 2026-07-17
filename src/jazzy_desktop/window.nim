@@ -150,12 +150,18 @@ proc applyFramelessAndMica*(w: Webview) =
     discard # Linux implementation pending
 
 when defined(linux):
-  proc gtk_window_iconify(window: pointer) {.importc, cdecl.}
-  proc gtk_window_maximize(window: pointer) {.importc, cdecl.}
-  proc gtk_window_unmaximize(window: pointer) {.importc, cdecl.}
-  proc gtk_widget_hide(widget: pointer) {.importc, cdecl.}
-  proc gtk_widget_show_all(widget: pointer) {.importc, cdecl.}
-  proc gtk_window_set_position(window: pointer, position: cint) {.importc, cdecl.}
+  proc gtk_window_iconify(window: pointer)
+  {.importc, cdecl, header: "<gtk/gtk.h>".}
+proc gtk_window_maximize(window: pointer)
+  {.importc, cdecl, header: "<gtk/gtk.h>".}
+proc gtk_window_unmaximize(window: pointer)
+  {.importc, cdecl, header: "<gtk/gtk.h>".}
+proc gtk_widget_hide(widget: pointer)
+  {.importc, cdecl, header: "<gtk/gtk.h>".}
+proc gtk_widget_show_all(widget: pointer)
+  {.importc, cdecl, header: "<gtk/gtk.h>".}
+proc gtk_window_set_position(window: pointer, position: cint)
+  {.importc, cdecl, header: "<gtk/gtk.h>".}
 
 
 proc winMinimize*(w: Webview) =
